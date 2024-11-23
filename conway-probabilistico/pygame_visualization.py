@@ -50,7 +50,7 @@ def run_GameOfLifeModel(
         screen_height = display_info.current_h  # Altura da tela em pixels
 
         # Ajusta a largura e comprimento
-        width = (screen_width+3) // cell_size
+        width = (screen_width) // cell_size
         height = (screen_height - 100) // cell_size  # Subtraímos 100 pixels para os controles
 
         # Configura a tela em modo tela cheia
@@ -68,23 +68,27 @@ def run_GameOfLifeModel(
         exit_button_rect = pygame.Rect(230, height * cell_size + 10, 100, 30)  # Novo botão "Exit"
         return clear_button_rect, random_button_rect, exit_button_rect
     
-    def setup_slider(cell_size, height):
+    def setup_sliders(cell_size, height):
         """
-        Configura o slider para controle da velocidade.
+        Configura dois sliders lado a lado.
         """
-        slider_rect = pygame.Rect(10, height * cell_size + 50, 200, 20)
-        slider_pos = 1  # Posição inicial para velocidade de 1
-        return slider_rect, slider_pos
-    
+        slider_speed = pygame.Rect(10, height * cell_size + 70, 200, 20)
+        slider_respawn = pygame.Rect(260, height * cell_size + 70, 200, 20)
+        sliders = {
+            "slider1": {"rect": slider_speed, "pos": 20, "label": "Speed"}, 
+            "slider2": {"rect": slider_respawn, "pos": 100, "label": "Respawn %"}
+
+        }
+        return sliders
+
     def handle_events(
         model, width, height, cell_size, clear_button_rect, random_button_rect, exit_button_rect,
-        slider_rect, paused, dragging_slider, slider_pos
+        sliders, paused, dragging_slider
     ):
         """
         Processa eventos do usuário, incluindo mouse, teclado e interação com botões.
         """
         running = True
-        dragging = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -93,22 +97,18 @@ def run_GameOfLifeModel(
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
 
-                # Botão Clear
+                # Botões
                 if clear_button_rect.collidepoint(mouse_x, mouse_y):
                     model.cell_layer.data = np.zeros((width, height), dtype=bool)
-
-                # Botão Random
                 elif random_button_rect.collidepoint(mouse_x, mouse_y):
                     model.cell_layer.data = np.random.rand(width, height) < 0.2
-
-                # Botão Exit
                 elif exit_button_rect.collidepoint(mouse_x, mouse_y):  # Lógica para sair
                     running = False
 
-                # Slider
-                elif slider_rect.collidepoint(mouse_x, mouse_y):
-                    dragging_slider = True
-                    slider_pos = max(0, min(200, mouse_x - slider_rect.x))
+                for key, slider in sliders.items():
+                    if slider["rect"].collidepoint(mouse_x, mouse_y):
+                        dragging_slider[key] = True  # Começa a arrastar
+                        slider["pos"] = max(0, min(200, mouse_x - slider["rect"].x))
 
                 # Interação com células
                 else:
@@ -119,40 +119,22 @@ def run_GameOfLifeModel(
                         model.cell_layer.data[grid_x, grid_y] = not model.cell_layer.data[grid_x, grid_y]
 
             elif event.type == pygame.MOUSEBUTTONUP:
-                dragging_slider = False
+                for key in dragging_slider:
+                    dragging_slider[key] = False
+
+            elif event.type == pygame.MOUSEMOTION:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                for key, slider in sliders.items():
+                    if dragging_slider.get(key, False):
+                        slider["pos"] = max(0, min(200, mouse_x - slider["rect"].x))
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     paused = not paused
 
-        # Lida com o dragging do mouse (movimentação contínua do slider)
-        if dragging_slider:
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            slider_pos = max(0, min(200, mouse_x - slider_rect.x))  # Limita a posição do slider
-
-        return running, paused, dragging_slider, slider_pos
-    
-    def update_model(paused, slider_pos, clock):
-        """
-        Atualiza o estado do modelo e controla a velocidade.
-        """
-        # Inverte o slider para que o valor maior esteja à direita
-        slider_value = slider_pos / 200
-        
-        # Velocidade
-        speed = (50 * slider_value)
-        if speed < 0.1:
-            speed = 0
-        else:
-            speed = math.ceil((50 * slider_value ** 1.1))
-        
-        # Pausa o jogo 
-        if speed == 0:
-            paused = True
-
-        clock.tick(speed)  # Controla o clock de acordo com a velocidade ajustada
-
-        return speed, paused
+        # Calcula valores normalizados dos sliders
+        slider_values = {key: slider["pos"] / 200 for key, slider in sliders.items()}
+        return running, paused, dragging_slider, slider_values
         
     def draw_cells(screen, model, cell_size, width, height, empty_color):
         """
@@ -202,15 +184,34 @@ def run_GameOfLifeModel(
         draw_button(screen, random_button_rect, "Random", font, mouse_pos, button_color, button_hover_color) 
         draw_button(screen, exit_button_rect, "Exit", font, mouse_pos, button_color, button_hover_color) 
 
-    def render_slider(screen, font, slider_rect, slider_pos, speed):
+    def render_sliders(screen, font, sliders):
         """
-        Renderiza o controle do slider e exibe a velocidade atual.
+        Renderiza múltiplos sliders lado a lado.
         """
-        pygame.draw.rect(screen, (255, 255, 255), slider_rect, 2)  # Caixa do slider
-        pygame.draw.circle(screen, (255, 0, 0), (slider_rect.x + slider_pos, slider_rect.centery), 10)  # Controle
-        speed_text = f"Speed: {speed}"
-        speed_surface = font.render(speed_text, True, (255, 255, 255))
-        screen.blit(speed_surface, (slider_rect.x + 220, slider_rect.y))
+        for key, slider in sliders.items():
+            # Caixa do slider
+            pygame.draw.rect(screen, (255, 255, 255), slider["rect"], 2)
+
+            # Controle do slider
+            pygame.draw.circle(
+                screen, (255, 0, 0), (slider["rect"].x + slider["pos"], slider["rect"].centery), 10
+            )
+
+            # Rótulo do slider
+            label = font.render(slider["label"], True, (255, 255, 255))
+            screen.blit(label, (slider["rect"].x, slider["rect"].y - 20))
+
+        slider1 = sliders['slider1']
+        slider2 = sliders['slider2']
+        # Valor do slider (de 0 a 50) para a velocidade
+        value = int(slider1["pos"] / 200 * 50)  # Escala o valor de 0 a 50
+        value_text = font.render(f"{value:.1f}", True, (255, 255, 255))
+        screen.blit(value_text, (slider1["rect"].x + slider1["rect"].width + 10, slider1["rect"].y))
+        # Valor do slider (de 0% a 0.02%) para o respawn
+        value = slider2["pos"] / 10000  # Escala o valor de 0 a 0.02
+        value_text = font.render(f"{value:.3f}", True, (255, 255, 255))
+        screen.blit(value_text, (slider2["rect"].x + slider2["rect"].width + 10, slider2["rect"].y))
+        revive_probabilities[0] = value
 
     def render_status(screen, font, width, cell_size, paused):
         """
@@ -247,32 +248,40 @@ def run_GameOfLifeModel(
         width, height, revive_probabilities, survival_probabilities, alive_fraction, lamb, age_death
     ) 
     clear_button_rect, random_button_rect, exit_button_rect = setup_buttons(cell_size, height) # Configuração dos botões.
-    slider_rect, slider_pos = setup_slider(cell_size, height) # Configuração do slider.
+    sliders = setup_sliders(cell_size, height)  # Configuração inicial dos sliders
     font = pygame.font.SysFont(None, 24) # Fonte usada nos textos.
-    running, paused, dragging_slider = True, False, False # Estados iniciais do jogo.
+    running, paused = True, False # Estados iniciais do jogo.
+    dragging_slider = {key: False for key in sliders}  # Inicialização do estado de arraste
     max_age = 0 # Idade máxima inicial.
 
     # Loop Principal do jogo.
     while running:
-        running, paused, dragging_slider, slider_pos = handle_events(
-        model, width, height, cell_size, clear_button_rect,
-        random_button_rect, exit_button_rect, slider_rect, paused, dragging_slider, slider_pos
-        )
-
         mouse_pos = pygame.mouse.get_pos()
-        speed, paused = update_model(paused, slider_pos, clock)
+        running, paused, dragging_slider, slider_values = handle_events(
+            model, width, height, cell_size, clear_button_rect, random_button_rect, exit_button_rect,
+            sliders, paused, dragging_slider
+        )
+        speed = int(slider_values["slider1"] * 50)
 
-        # Renderização
-        render_game(screen, model, cell_size, width, height, empty_color)
-        render_buttons(screen, font, mouse_pos, clear_button_rect, random_button_rect, exit_button_rect, button_color, button_hover_color)
-        render_slider(screen, font, slider_rect, slider_pos, speed)
-        render_status(screen, font, width, cell_size, paused)
-        max_age = render_model_info(screen, font, model, max_age)
-        pygame.display.flip()  # Atualiza a tela
+        if speed != 0:
+            clock.tick(speed)  # Ajusta a velocidade do jogo
+
+        if speed == 0:
+            paused = True
 
         if not paused:
-            model.step() # Avança uma etapa no modelo.
+            model.step()
+
+        # Renderização
+        screen.fill((0, 0, 0))
+        render_game(screen, model, cell_size, width, height, empty_color)
+        render_buttons(screen, font, mouse_pos, clear_button_rect, random_button_rect, exit_button_rect, button_color, button_hover_color)
+        render_sliders(screen, font, sliders)
+        render_status(screen, font, width, cell_size, paused)
+        max_age = render_model_info(screen, font, model, max_age)
+        pygame.display.flip()
 
     pygame.quit()
+
 
 run_GameOfLifeModel(10, {0: 0.001, 3: 1.0}, {2: 1, 3: 1}, 1050, False)
