@@ -147,7 +147,7 @@ def plot_graph(proportions, graph_event):
             y_limit = min(1, 1.5 * max_y)
             ax.set_ylim(0, y_limit)
 
-            ax.set_xlim(0, len(proportions) * 1.5)  # Ajustar dinamicamente o eixo x
+            ax.set_xlim(0, len(proportions) * 1.3)  # Ajustar dinamicamente o eixo x
         return line,
 
     ani = FuncAnimation(fig, update_plot, init_func=init_plot)
