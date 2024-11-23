@@ -76,11 +76,16 @@ class Conway_empires(Model):
         vilas,
         mst,
         grid,
+        param,
         
         
     ):
         self.graph = G()
         self.grid = grid
+        self.chaos_rate = param[0]
+        self.convoke_rate = param[1]
+        self.dom_rate = param[2]
+        self.break_rate = param[3]
         
         BLACK = (0, 0, 0)
         Barbarians = (255, 255, 255) 
@@ -92,12 +97,7 @@ class Conway_empires(Model):
         
         super().__init__()
         self.cell_layer = PropertyLayer("cells", gradeX, gradeY, False, dtype=int)
-        
-        '''self.cell_layer.data = np.random.choice(
-            [True, False], size=(gradeX, gradeY), p=[1, 0]
-        )'''
-        
-        
+           
         for v in vilas:
             x, y = v
             k = Vertex(v)
@@ -125,12 +125,12 @@ class Conway_empires(Model):
     def step(self):       
         
             for v in self.graph.Core:
-                v.devoc = [0, 0, 0]
-                v.caos = 0
+                v.devoc = [0, 0, 0] # mede a devoção, AKA quantidade de vizinho de tal facção
+                v.caos = 0 # mede o tanto de bárbaro perto
                 N = self.graph.neighbors(v)
+            
 
-                for n in N:
-                    print(n.fac)
+                for n in N: # calcula a devoção as facções baseado nos vizinhos
                     if n.fac == 'Golgari':
                         v.devoc[0] += 1
                     if n.fac == 'Boros':
@@ -140,34 +140,39 @@ class Conway_empires(Model):
                     if n.fac == 'Barbarian':
                         v.caos += 1
 
-
-                print(v.devoc)
-
-
                 p = random.randint(0,100)
 
-                c = 100
-
-                if v.devoc[0] >=1 and p <= c:
-                    v.next = 'Golgari'
-                elif v.devoc[1] >=1 and p <= c:
-                    v.next = 'Boros'
-                elif v.devoc[2] >=1 and p <= c:
-                    v.next = 'Dimir'
-                elif v.caos >=1 and p <= c:
-                    v.next = 'Barbarian'
-
-
-
-                # Determina a próxima facção com base nos vizinhos
-                if v.devoc[0] >= 2:
-                    v.next = 'Golgari'
-                elif v.devoc[1] >= 2:
-                    v.next = 'Boros'
-                elif v.devoc[2] >= 2:
-                    v.next = 'Dimir'
-                elif v.caos >= 2:
-                    v.next = 'Barbarian'
+                
+                facs = ['Golgari', 'Boros', 'Dimir']
+                dice = [0,1,2]
+                
+                random.shuffle(dice)
+                
+                changed = False
+                
+                if v.fac == 'Barbarian':
+                    if p <= self.convoke_rate:
+                        v.next = random.choice(facs)
+                        changed = True
+                        
+                else:
+                    if p <= self.chaos_rate:
+                        changed = True
+                        v.next = 'Barbarian'
+                    
+                    for i in dice:
+                        if changed:
+                            continue
+                        if v.devoc[i] == 1 and p <= self.dom_rate:
+                            v.next = facs[i]
+                            changed = True
+                        if v.devoc[i] >= 2 and p <= self.break_rate:
+                            v.next = 'Barbarian'
+                            changed = True
+                            
+                if not changed:
+                    v.next = v.fac
+                    
 
             # Atualiza as facções de cada vértice
             for v in self.graph.Core:
@@ -181,7 +186,7 @@ class Conway_empires(Model):
                 elif v.fac == 'Dimir':
                     self.grid[y][x] = (73, 81, 131)
                 elif v.fac == 'Barbarian':
-                    self.grid[y][x] = (255, 255, 255)  # Barbarians podem ter uma cor específica.
+                    self.grid[y][x] = (255, 255, 255) 
             
             
             

@@ -9,6 +9,7 @@ def empire(
     gradeX,
     gradeY,
     nodes,
+    param,
     colors={"empty": (0, 0, 0), "filled": (255, 255, 255)},
     
 ):
@@ -21,7 +22,7 @@ def empire(
     Fac = [
     (55, 182, 118),    # Golgari
     (246, 145, 168),   # Boros
-    (73, 81, 131),     # Esper
+    (73, 81, 131),     # Dimir
     ]
     
     
@@ -125,7 +126,7 @@ def empire(
                 tree.append([plano[a],plano[b]])
                 q+=1
                 
-        q//2
+        
         id = 0
         id += q
         
@@ -157,7 +158,7 @@ def empire(
     mst = Amina(vilas)
     
     model = Conway_empires(
-        cell, gradeX, gradeY, nodes, vilas, mst, grid
+        cell, gradeX, gradeY, nodes, vilas, mst, grid, param
     )
     
     running = True
@@ -180,7 +181,15 @@ def empire(
         model.step()
 
     pygame.quit()
-                
-        
     
-empire(8,180, 80, 150)
+    
+param = [
+    50, # chance de um tile se tornar um bárbaro
+    30, # chance de um bárbaro se unir a uma facção
+    50, # chance de um tile se converter a uma facção se possuir devoção 1
+    30, # chance de um tile se tornar um bárbaro se possuir devoção maior que 2
+    
+]
+                
+# os parâmetros são, tamanho do tile, largura da tela, altura da tela, e metade de quantidade total de tiles
+empire(8,180, 80, 200, param)
