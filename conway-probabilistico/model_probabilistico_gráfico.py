@@ -1,11 +1,4 @@
 # A ideia dessa modificação é implementar um gráfico de evolução da proporção células vivas/ total de células.
-# Tá com alguns problemas de implementação ainda. As vezes a vizualização do pygame simplesmente fecha mexendo na aba do gráfico e o gráfico no momento 
-# continua contando passos mesmo quando o jogo está pausado. Acho que também da pra enfeitar um pouco a vizualização do gráfico pra ficar mais bonitinho, mas não mexi nisso ainda
-# Resumidamente o código precisa de umas revisões ainda, tanto pra funcionar bem quanto pra aperfeiçoar a vizualização.
-
-# Ps: deve dar pra fazer alguma coisa parecida na parte das presas e tal pra extrair e vizualizar os dados (as vezes mantendo informações diferentes das daqui), mas honestamente
-# eu (Pedro) ainda não li os códigos dessa parte.
-
 
 # The previous default libraries 
 import numpy as np
@@ -19,7 +12,8 @@ from scipy.stats import expon
 # For the evolution graph ploting
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from threading import Thread
+from multiprocessing import Process, Event, Manager
+import time  # For adding a delay in the game initialization for the graphic to initialize before the game when graph = True.
 
 
 class GameOfLifeModel(
@@ -121,6 +115,45 @@ class GameOfLifeModel(
         self.datacollector.collect(self)
 
 
+# Para plotar o gráfico
+
+def plot_graph(proportions, graph_event):
+    # Configuração da figura do gráfico
+    fig, ax = plt.subplots()
+    fig.patch.set_facecolor('black')  # Fundo preto para a janela do gráfico
+    ax.set_facecolor('black')  # Fundo preto para o gráfico
+
+    x_data, y_data = [], []
+    line, = ax.plot([], [], lw=2, color="cyan")  # Linha ciano para destaque no fundo preto
+
+    def init_plot():
+        ax.set_xlim(0, 100)  # Range inicial do eixo x
+        ax.set_ylim(0, 1)  # Proporção de células vivas entre 0 e 1
+        ax.set_title("Fraction of Alive Cells Over Time", color="white")  # Título branco
+        ax.set_xlabel("Steps", color="white")  # Eixo x em branco
+        ax.set_ylabel("Fraction Alive", color="white")  # Eixo y em branco
+        ax.tick_params(axis='x', colors='white')  # Cor dos ticks do eixo x
+        ax.tick_params(axis='y', colors='white')  # Cor dos ticks do eixo y
+        return line,
+
+    def update_plot(frame):
+        if graph_event.is_set() and len(proportions) > 0:  # Atualiza somente quando não está pausado
+            x_data.append(len(proportions))
+            y_data.append(proportions[-1])
+            line.set_data(x_data, y_data)
+
+            # Ajustar dinamicamente o range do eixo y
+            max_y = max(y_data)
+            y_limit = min(1, 1.5 * max_y)
+            ax.set_ylim(0, y_limit)
+
+            ax.set_xlim(0, len(proportions) * 1.5)  # Ajustar dinamicamente o eixo x
+        return line,
+
+    ani = FuncAnimation(fig, update_plot, init_func=init_plot)
+    plt.show()
+
+
 def run_GameOfLifeModel(
     width,
     height,
@@ -148,41 +181,17 @@ def run_GameOfLifeModel(
 
     # Graph setup. Se graph == False, o código funciona exatamente como antes da modificação
     if graph:
-        proportions = []  # Para armazenar as proporções de cada passo
-        fig, ax = plt.subplots()
-        x_data, y_data = [], []
-        line, = ax.plot([], [], lw=2)
+        manager = Manager()
+        proportions = manager.list()  # Para armazenar as proporções de cada passo (compartilhado entre processos)
+        graph_event = Event()
+        graph_event.set()  # Permitir atualizações inicialmente
 
-        def init_plot():
-            ax.set_xlim(0, 100)  # Range inicial do eixo x
-            ax.set_ylim(0, 1)  # Proporção de células vivas entre 0 e 1
-            ax.set_title("Fraction of Alive Cells Over Time")
-            ax.set_xlabel("Steps")
-            ax.set_ylabel("Fraction Alive")
-            return line,
+        # Processo separado para o gráfico
+        graph_process = Process(target=plot_graph, args=(proportions, graph_event))    # Separa o processo do gráfico para rodar em um processador diferente do game. (para evitar os bugs com fechar o game subitamente etc mencionados antes)
+        graph_process.start()
 
-        def update_plot(frame):
-            if len(proportions) > 0:
-                x_data.append(frame)
-                y_data.append(proportions[-1])
-                line.set_data(x_data, y_data)
-
-                # Ajustar dinamicamente o range do eixo y
-                max_y = max(y_data)
-                y_limit = min(1, 1.5 * max_y)
-                ax.set_ylim(0, y_limit)
-
-                ax.set_xlim(0, len(proportions))  # Ajustar dinamicamente o eixo x
-            return line,
-
-        ani = FuncAnimation(fig, update_plot, init_func=init_plot, interval=100)
-
-        def show_graph():
-            plt.show()
-
-        # Para rodar o gráfico e o game em threads separados. É uma tentativa de resolver os bugs mencionados no começo, sobre fechar subitamente o game mexendo no grafico etc. Melhorou mas ainda não está funcionando muito bem
-        graph_thread = Thread(target=show_graph)
-        graph_thread.start()
+        # Delay para permitir que a janela do gráfico abra antes de iniciar o game
+        time.sleep(4)
 
     # Cores
     empty_color = colors["empty"]
@@ -197,8 +206,6 @@ def run_GameOfLifeModel(
     slider_rect = pygame.Rect(10, height * cell_size + 50, 200, 20)  # Barra de controle
     slider_pos = 0  # Posição inicial do slider
     dragging_slider = False  # Variável para detectar o arraste do slider
-
-    frame_count = 0  # Acompanha o número de passos (só vai ser usado para plotar o gráfico se graph == True)
 
     while running:
         for event in pygame.event.get():
@@ -228,7 +235,11 @@ def run_GameOfLifeModel(
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     paused = not paused
-
+                    if paused:
+                        graph_event.clear()  # Pausar atualizações do gráfico
+                    else:
+                        graph_event.set()  # Retomar atualizações do gráfico
+                        
         # Lida com o dragging do mouse (movimentação contínua do slider)
         if dragging_slider:
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -240,7 +251,8 @@ def run_GameOfLifeModel(
         # Se a velocidade for 0, pausa o jogo
         if speed == 0:
             paused = True
-
+            graph_event.clear()
+            
         clock.tick(speed)
 
         screen.fill((0, 0, 0)) 
@@ -303,19 +315,15 @@ def run_GameOfLifeModel(
             model.step()
             if graph:
                 proportions.append(model.alive_fraction)
-                frame_count += 1
-        
-        if graph:
-            plt.pause(0.001)  # Permite o gráfico atualizar dinamicamente
     
-
     if graph:
-        plt.show()
-
+        graph_process.terminate()  # Fechar o processo do gráfico ao encerrar
 
     pygame.quit()
 
 """Um exemplo onde todas as regras permanecem, com a exceção de que as vezes uma célula revive sozinha
 É curioso que nesse caso ela pode aparecer perto de uma estrutura estável, fazendo com que esta desestabilize e desapareça
 ou (o que é um pouco menos provável) cresça caoticamente"""
-run_GameOfLifeModel(120, 70, 10, {0: 0.001, 3: 1.0}, {2: 1, 3: 1}, 10000, True, graph=True)
+
+if __name__ == '__main__':
+    run_GameOfLifeModel(120, 70, 10, {0: 0.001, 3: 1.0}, {2: 1, 3: 1}, 10000, True, graph=True)
