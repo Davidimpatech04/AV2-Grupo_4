@@ -125,13 +125,20 @@ def run_GameOfLifeModel(
         counter_font = pygame.font.SysFont("Arial", 24)
         prey_text = counter_font.render(f"Presas: {prey_count}", True, (0, 255, 0))  # Cor verde para presas
         predator_text = counter_font.render(f"Predadores: {predator_count}", True, (255, 0, 0))  # Cor vermelha para predadores
-        screen.blit(prey_text, (1000, 710))  # Exibindo o contador de presas 
-        screen.blit(predator_text, (1000, 740))  # Exibindo o contador de predadores logo abaixo
-
+        screen.blit(prey_text, (900, 710))  # Exibindo o contador de presas 
+        screen.blit(predator_text, (900, 740))  # Exibindo o contador de predadores logo abaixo
+        
         # Adicionando a palavra 'Velocidade' acima do slider
         rate_font = pygame.font.SysFont("Arial", 20)
         rate_text = rate_font.render("Velocidade:", True, (255, 255, 255))  # Cor branca para o texto
         screen.blit(rate_text, (slider_rect.x + (slider_rect.width // 2) - rate_text.get_width() // 2, slider_rect.y - 30))
+
+        # Mostrar o status de pausa
+        pause_text = "PAUSED" if paused else "RUNNING"
+        pause_color = (255, 0, 0) if paused else (0, 255, 0)
+        pause_font = pygame.font.SysFont(None, 30)
+        pause_surface = pause_font.render(pause_text, True, pause_color)
+        screen.blit(pause_surface, (width * cell_size - 120, height * cell_size + 10))
 
         pygame.display.flip()  # Atualizar a tela
         clock.tick(speed)  # Ajusta a velocidade com base no slider (quanto maior o valor de speed, mais rápido será)
