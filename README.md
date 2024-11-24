@@ -5,7 +5,7 @@ As visualizações implementadas são variadas, que vão desde criptografia (sim
 ![pygame.png](pygame.png)
 
 ### Overview
-Conway's [Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) is a classic cellular automaton where each cell on a grid can either be alive or dead. The state of each cell changes over time based on a set of simple rules that depend on the number of alive neighbors.
+O Jogo da Vida de [Conway](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) é um autômata celular clássico, onde cada célula pode estar viva ou morta. O estado da célula muda com o tempo baseado em algumas regras que depende da quantidade de vizinhos. Em nossa implementação base do jogo, a ocorrência da morte ou nascimento de uma célula não baseia-se somente nas regras, mas também em uma determinada probabilidade.
 
 #### Key features:
 - **No grid or agents:** This implementation uses the `PropertyLayer` to manage the state of cells, eliminating the need for traditional grids or agents.
