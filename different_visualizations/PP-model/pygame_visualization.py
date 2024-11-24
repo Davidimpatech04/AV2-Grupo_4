@@ -1,6 +1,7 @@
 from pp_model import GameOfLifeModel
 import pygame
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def run_GameOfLifeModel(
@@ -28,6 +29,7 @@ def run_GameOfLifeModel(
 
     # Definir a área do botão RESET (na parte inferior esquerda)
     reset_button_rect = pygame.Rect(10, height * cell_size - 40, 100, 30)
+    clear_button_rect = pygame.Rect(120, height * cell_size - 40, 100, 30)
 
     # Listas para armazenar os dados de presas e predadores
 
@@ -66,6 +68,8 @@ def run_GameOfLifeModel(
                 elif slider_rect.collidepoint(mouse_x, mouse_y):
                     slider_pos = max(0, min(200, mouse_x - slider_rect.x))
                     dragging_slider = True
+                elif clear_button_rect.collidepoint(mouse_x, mouse_y):
+                    model.cell_layer.data = np.zeros((width, height), dtype=bool)    
                 else:
                     # Clique simples ou duplo
                     current_time = pygame.time.get_ticks()
@@ -120,6 +124,11 @@ def run_GameOfLifeModel(
         font = pygame.font.SysFont("Arial", 20)
         text = font.render("RESET", True, (0, 0, 0))
         screen.blit(text, (reset_button_rect.x + 20, reset_button_rect.y + 5))
+
+        pygame.draw.rect(screen, (200, 200, 200), clear_button_rect)
+        font = pygame.font.SysFont("Arial", 20)
+        text = font.render("CLEAR", True, (0, 0, 0))
+        screen.blit(text, (clear_button_rect.x + 20, clear_button_rect.y + 5))
 
         # Exibindo o contador de presas e predadores
         counter_font = pygame.font.SysFont("Arial", 24)
