@@ -456,7 +456,8 @@ def run_GameOfLifeModel(
     
     # Inicialização do jogo
     if not screen_size and graph: # valor default para graph == True e tamanho da tela não dado
-        screen_size = (900, 600)
+        screen_size = (1130, 680)
+    # Slider está com problema de renderização para largura screen_size menor que (1100, y). Na prática, o jogo funciona igual, é só um problema de vizualização
     screen, clock, width, height = initialize_pygame(cell_size, screen_size)
     model = GameOfLifeModel( # Instancia o modelo do jogo.
         width, height, revive_probabilities, survival_probabilities, alive_fraction, lamb, age_death
