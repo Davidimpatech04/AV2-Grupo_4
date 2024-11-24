@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+
 def run_GameOfLifeModel(
     width,
     height,
@@ -12,8 +13,11 @@ def run_GameOfLifeModel(
     initial_config=None,
     colors={"empty": (0, 255, 0), "prey": (255, 255, 0), "predator": (255, 0, 0)},
 ):
+    extra_width = 300
     pygame.init()
-    screen = pygame.display.set_mode((width * cell_size, height * cell_size + 100))  # Adicionando espaço para o controle de velocidade
+
+    # Adicionando espaço para o controle de velocidade
+    screen = pygame.display.set_mode((width * cell_size + extra_width, height * cell_size))  
     clock = pygame.time.Clock()
 
     # Corrigindo a criação do modelo para garantir que lamb seja utilizado corretamente
@@ -27,9 +31,9 @@ def run_GameOfLifeModel(
     prey_color = colors["prey"]  # Cor para presas
     predator_color = colors["predator"]  # Cor para predadores
 
-    # Definir a área do botão RESET (na parte inferior esquerda)
-    reset_button_rect = pygame.Rect(10, height * cell_size - 40, 100, 30)
-    clear_button_rect = pygame.Rect(120, height * cell_size - 40, 100, 30)
+    # Definir a área do botão RESET (na parte superior direita)
+    reset_button_rect = pygame.Rect(width * cell_size + 150, 20, 100, 40)
+    clear_button_rect = pygame.Rect(width * cell_size + 150, 70, 100, 40)
 
     # Listas para armazenar os dados de presas e predadores
 
@@ -39,7 +43,7 @@ def run_GameOfLifeModel(
     time_step = 0
 
     # Barra de controle de velocidade
-    slider_rect = pygame.Rect(10, height * cell_size + 50, 200, 20)  # Caixa do slider
+    slider_rect = pygame.Rect(width * cell_size + 20, 150, 200, 20)  # Caixa do slider
     slider_pos = 100  # Posição inicial do slider (100 => 50% da velocidade)
     dragging_slider = False
 
@@ -68,8 +72,9 @@ def run_GameOfLifeModel(
                 elif slider_rect.collidepoint(mouse_x, mouse_y):
                     slider_pos = max(0, min(200, mouse_x - slider_rect.x))
                     dragging_slider = True
+                # Clique no botão Clear
                 elif clear_button_rect.collidepoint(mouse_x, mouse_y):
-                    model.cell_layer.data = np.zeros((width, height), dtype=bool)    
+                    model.cell_layer.data = np.zeros((width, height), dtype=bool)   
                 else:
                     # Clique simples ou duplo
                     current_time = pygame.time.get_ticks()
@@ -104,7 +109,9 @@ def run_GameOfLifeModel(
         time_step += 1
 
 
-        screen.fill(empty_color)  # Limpar tela com fundo preto
+        screen.fill(empty_color)
+        control_area_rect = pygame.Rect(width * cell_size, 0, extra_width, height * cell_size)
+        pygame.draw.rect(screen, (50,50,50,), control_area_rect)
 
 
         # Desenho das células
@@ -125,29 +132,29 @@ def run_GameOfLifeModel(
         text = font.render("RESET", True, (0, 0, 0))
         screen.blit(text, (reset_button_rect.x + 20, reset_button_rect.y + 5))
 
+        # Desenhando o botão CLEAR
         pygame.draw.rect(screen, (200, 200, 200), clear_button_rect)
         font = pygame.font.SysFont("Arial", 20)
         text = font.render("CLEAR", True, (0, 0, 0))
         screen.blit(text, (clear_button_rect.x + 20, clear_button_rect.y + 5))
 
+
         # Exibindo o contador de presas e predadores
         counter_font = pygame.font.SysFont("Arial", 24)
         prey_text = counter_font.render(f"Presas: {prey_count}", True, (0, 255, 0))  # Cor verde para presas
         predator_text = counter_font.render(f"Predadores: {predator_count}", True, (255, 0, 0))  # Cor vermelha para predadores
-        screen.blit(prey_text, (900, 710))  # Exibindo o contador de presas 
-        screen.blit(predator_text, (900, 740))  # Exibindo o contador de predadores logo abaixo
-        
+        screen.blit(prey_text, (width * cell_size + 20, 650))  # Exibindo o contador de presas 
+        screen.blit(predator_text, (width * cell_size + 20, 620))  # Exibindo o contador de predadores logo abaixo
+
         # Adicionando a palavra 'Velocidade' acima do slider
+        '''
+        O slider está com um bug em que, caso esteja no final ou começo, ao tentar clicar,
+        o display do jogo fecha, e não consegui consertar isso. 
+        '''
         rate_font = pygame.font.SysFont("Arial", 20)
         rate_text = rate_font.render("Velocidade:", True, (255, 255, 255))  # Cor branca para o texto
         screen.blit(rate_text, (slider_rect.x + (slider_rect.width // 2) - rate_text.get_width() // 2, slider_rect.y - 30))
 
-        # Mostrar o status de pausa
-        pause_text = "PAUSED" if paused else "RUNNING"
-        pause_color = (255, 0, 0) if paused else (0, 255, 0)
-        pause_font = pygame.font.SysFont(None, 30)
-        pause_surface = pause_font.render(pause_text, True, pause_color)
-        screen.blit(pause_surface, (width * cell_size - 120, height * cell_size + 10))
 
         pygame.display.flip()  # Atualizar a tela
         clock.tick(speed)  # Ajusta a velocidade com base no slider (quanto maior o valor de speed, mais rápido será)
