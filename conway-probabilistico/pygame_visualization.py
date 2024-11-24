@@ -46,8 +46,8 @@ def run_GameOfLifeModel(
 
         # Obtém informações da tela
         display_info = pygame.display.Info()
-        screen_width = display_info.current_w  # Largura da tela em pixels
-        screen_height = display_info.current_h  # Altura da tela em pixels
+        screen_width = display_info.current_w-200  # Largura da tela em pixels
+        screen_height = display_info.current_h-200  # Altura da tela em pixels
 
         # Ajusta a largura e comprimento
         width = (screen_width) // cell_size
