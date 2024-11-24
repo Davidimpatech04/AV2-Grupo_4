@@ -169,6 +169,9 @@ def run_GameOfLifeModel(
     graph=False
 ):
     pygame.init()
+    pygame.display.set_caption('Grupo 4 - Conway')
+    pygame_icon = pygame.image.load('impatech.png')
+    pygame.display.set_icon(pygame_icon)
     screen = pygame.display.set_mode((width * cell_size, height * cell_size + 100))  # Mais espaço para a barra de velocidade
     clock = pygame.time.Clock()
 

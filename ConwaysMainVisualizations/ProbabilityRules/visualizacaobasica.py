@@ -44,6 +44,10 @@ def run_GameOfLifeModel(
         """
         pygame.init()
 
+        pygame.display.set_caption('Grupo 4 - Conway')
+        pygame_icon = pygame.image.load('impatech.png')
+        pygame.display.set_icon(pygame_icon)
+        
         # Obtém informações da tela
         display_info = pygame.display.Info()
         screen_width = display_info.current_w-200  # Largura da tela em pixels

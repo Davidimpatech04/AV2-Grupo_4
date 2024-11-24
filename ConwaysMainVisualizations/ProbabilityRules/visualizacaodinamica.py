@@ -212,6 +212,10 @@ def run_GameOfLifeModel(
         Inicializa o Pygame em modo janela com tamanho flexível.
         """
         pygame.init()
+
+        pygame.display.set_caption('Grupo 4 - Conway')
+        pygame_icon = pygame.image.load('impatech.png')
+        pygame.display.set_icon(pygame_icon)
         
         if not screen_size: # plota em tela cheia
             display_info = pygame.display.Info()

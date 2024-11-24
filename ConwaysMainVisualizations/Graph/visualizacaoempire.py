@@ -14,6 +14,9 @@ def empire(
     
 ):
     pygame.init()
+    pygame.display.set_caption('Grupo 4 - Conway')
+    pygame_icon = pygame.image.load('impatech.png')
+    pygame.display.set_icon(pygame_icon)
     screen = pygame.display.set_mode((gradeX * cell, gradeY * cell ))
     clock = pygame.time.Clock()
     
