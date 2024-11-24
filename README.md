@@ -1,25 +1,8 @@
-# AV2-Grupo_4
-
-## How to run the examples 
-
-Each folder in the repo is a different model of a variation of Conway's Game of Life (including the folder 'game-of-life', which is the vanilla GoL). To run each of the models, run
-
-```bash
-cd _name_of_the_example
-python3 _name_of_the_example.py
-```
-PS: You may need to install the dependencies separately to run the project. Some dependencies include (but are not limited to) flask, matplotlib, numpy, matplotlib. To install a dependency, open the project repo and in your terminal, run
-
-```bash
-python3 -m venv env
-source env/bin/activate
-pip install _dependecy_
-```
-
 ## Conway's Game of Life (Fast)
-This example demonstrates a fast and efficient implementation of Conway's Game of Life using the [`PropertyLayer`](https://github.com/projectmesa/mesa/pull/1898) from the Mesa framework.
+Esta implementação do jogo da vida buscou juntar algo diferente que era de interesse de todos do grupo, a não determinicidade, para assim, modelar visualizações interessantes com o modelo probabilístico.
+As visualizações implementadas são variadas, que vai desde criptografia (simples) até algo que se assemelha ao modelo predador-presa.   
 
-![GoL_fast_screenshot.png](GoL_fast_screenshot.png)
+![pygame.png](pygame.png)
 
 ### Overview
 Conway's [Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) is a classic cellular automaton where each cell on a grid can either be alive or dead. The state of each cell changes over time based on a set of simple rules that depend on the number of alive neighbors.
@@ -43,18 +26,7 @@ The model is benchmarked in https://github.com/projectmesa/mesa/pull/1898#issuec
 - NumPy and SciPy
 
 #### Running the Model
-To run the model, open a new file or notebook and add:
-
-```Python
-from model import GameOfLifeModel
-model = GameOfLifeModel(width=10, height=10, alive_fraction=0.2)
-for i in range(10):
-    model.step()
-```
-Or to run visualized with Solara, run in your terminal:
-
-```bash
-solara run app.py
+Para observar as visualizações, basta ecessar os arquivos que possuem 'visualizacao' no começo do nome, cada pasta possui sua própria visualização e modelo. 
 ```
 
 ### Understanding the Code
