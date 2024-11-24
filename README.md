@@ -7,6 +7,11 @@ As visualizações implementadas são variadas, que vão desde criptografia (sim
 ### Overview
 O Jogo da Vida de [Conway](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) é um autômata celular clássico, onde cada célula pode estar viva ou morta. O estado da célula muda com o tempo baseado em algumas regras que depende da quantidade de vizinhos. Em nossa implementação base do jogo, a ocorrência da morte ou nascimento de uma célula não baseia-se somente nas regras, mas também em uma determinada probabilidade.
 
+#### Running the Model
+Para observar as visualizações, basta ecessar os arquivos que possuem 'visualizacao' no começo do nome, cada pasta possui sua própria visualização e modelo. 
+```
+
+###**Comentários do repositório original:**
 #### Key features:
 - **No grid or agents:** This implementation uses the `PropertyLayer` to manage the state of cells, eliminating the need for traditional grids or agents.
 - **Fast:** By using 2D convolution to count neighbors, the model efficiently applies the rules of the Game of Life across the entire grid.
@@ -24,10 +29,6 @@ The model is benchmarked in https://github.com/projectmesa/mesa/pull/1898#issuec
 - Python 3.10 or higher
 - Mesa 2.3 or higher (3.0.0b0 or higher for the visualisation)
 - NumPy and SciPy
-
-#### Running the Model
-Para observar as visualizações, basta ecessar os arquivos que possuem 'visualizacao' no começo do nome, cada pasta possui sua própria visualização e modelo. 
-```
 
 ### Understanding the Code
 - **Model initialization:** The grid is represented by a `PropertyLayer` where each cell is randomly initialized as alive or dead based on a given probability.
