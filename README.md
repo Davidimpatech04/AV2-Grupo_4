@@ -1,6 +1,6 @@
 ## Conway's Game of Life (Fast)
 Esta implementação do jogo da vida buscou juntar algo diferente que era de interesse de todos do grupo, a não determinicidade, para assim, modelar visualizações interessantes com o modelo probabilístico.
-As visualizações implementadas são variadas, que vai desde criptografia (simples) até algo que se assemelha ao modelo predador-presa.   
+As visualizações implementadas são variadas, que vão desde criptografia (simples) até algo que se assemelha ao modelo predador-presa.   
 
 ![pygame.png](pygame.png)
 
