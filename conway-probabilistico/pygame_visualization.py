@@ -74,10 +74,14 @@ def run_GameOfLifeModel(
         """
         slider_speed = pygame.Rect(10, height * cell_size + 70, 200, 20)
         slider_respawn = pygame.Rect(260, height * cell_size + 70, 200, 20)
+        slider_density = pygame.Rect(520, height * cell_size + 70, 200, 20)
+        slider_cell_size = pygame.Rect(780, height * cell_size + 70, 200, 20)
+
         sliders = {
             "slider1": {"rect": slider_speed, "pos": 20, "label": "Speed"}, 
-            "slider2": {"rect": slider_respawn, "pos": 100, "label": "Respawn %"}
-
+            "slider2": {"rect": slider_respawn, "pos": 100, "label": "Respawn %"},
+            "slider3": {"rect": slider_density, "pos": 100, "label": "Init Density"},
+            "slider4": {"rect": slider_cell_size, "pos": 50, "label": "Cell Size"}
         }
         return sliders
 
@@ -101,8 +105,10 @@ def run_GameOfLifeModel(
                 if clear_button_rect.collidepoint(mouse_x, mouse_y):
                     model.cell_layer.data = np.zeros((width, height), dtype=bool)
                 elif random_button_rect.collidepoint(mouse_x, mouse_y):
-                    model.cell_layer.data = np.random.rand(width, height) < 0.2
-                elif exit_button_rect.collidepoint(mouse_x, mouse_y):  # Lógica para sair
+                    slider3 = sliders['slider3']
+                    alive_fraction = slider3['pos']/200
+                    model.cell_layer.data = np.random.rand(width, height) <= alive_fraction
+                elif exit_button_rect.collidepoint(mouse_x, mouse_y):  
                     running = False
 
                 for key, slider in sliders.items():
@@ -112,11 +118,10 @@ def run_GameOfLifeModel(
 
                 # Interação com células
                 else:
-                    dragging = True
                     grid_x = mouse_x // cell_size
                     grid_y = mouse_y // cell_size
                     if 0 <= grid_x < width and 0 <= grid_y < height:
-                        model.cell_layer.data[grid_x, grid_y] = not model.cell_layer.data[grid_x, grid_y]
+                        click_buffer[grid_x, grid_y] = not click_buffer[grid_x, grid_y]
 
             elif event.type == pygame.MOUSEBUTTONUP:
                 for key in dragging_slider:
@@ -201,17 +206,27 @@ def run_GameOfLifeModel(
             label = font.render(slider["label"], True, (255, 255, 255))
             screen.blit(label, (slider["rect"].x, slider["rect"].y - 20))
 
-        slider1 = sliders['slider1']
-        slider2 = sliders['slider2']
         # Valor do slider (de 0 a 50) para a velocidade
+        slider1 = sliders['slider1']
         value = int(slider1["pos"] / 200 * 50)  # Escala o valor de 0 a 50
         value_text = font.render(f"{value:.1f}", True, (255, 255, 255))
         screen.blit(value_text, (slider1["rect"].x + slider1["rect"].width + 10, slider1["rect"].y))
         # Valor do slider (de 0% a 0.02%) para o respawn
+        slider2 = sliders['slider2']
         value = slider2["pos"] / 10000  # Escala o valor de 0 a 0.02
         value_text = font.render(f"{value:.3f}", True, (255, 255, 255))
         screen.blit(value_text, (slider2["rect"].x + slider2["rect"].width + 10, slider2["rect"].y))
         revive_probabilities[0] = value
+        # Ajustar a densidade
+        slider3 = sliders['slider3']
+        value = slider3["pos"] / 200  # Densidade de 0 a 1
+        value_text = font.render(f"{value:.2f}", True, (255, 255, 255))
+        screen.blit(value_text, (slider3["rect"].x + slider3["rect"].width + 10, slider3["rect"].y))
+        # Valor do slider (de 5 a 50 pixels) para o tamanho das células
+        slider4 = sliders['slider4']
+        value = int(slider4["pos"] / 200 * 45 + 5)  # Escala o valor de 5 a 50
+        value_text = font.render(f"{value}", True, (255, 255, 255))
+        screen.blit(value_text, (slider4["rect"].x + slider4["rect"].width + 10, slider4["rect"].y))
 
     def render_status(screen, font, width, cell_size, paused):
         """
@@ -220,7 +235,11 @@ def run_GameOfLifeModel(
         pause_text = "PAUSED" if paused else "RUNNING"
         pause_color = (255, 0, 0) if paused else (0, 255, 0)
         pause_surface = pygame.font.SysFont(None, 30).render(pause_text, True, pause_color)
-        screen.blit(pause_surface, (width * cell_size - 120, height * cell_size + 10))
+
+        display_info = pygame.display.Info()
+        screen_width = display_info.current_w  # Largura da tela em pixels
+        screen_height = display_info.current_h  # Altura da tela em pixels
+        screen.blit(pause_surface, (screen_width - 120, screen_height - 80))
 
     def render_model_info(screen, font, model, max_age):
         """
@@ -253,6 +272,7 @@ def run_GameOfLifeModel(
     running, paused = True, False # Estados iniciais do jogo.
     dragging_slider = {key: False for key in sliders}  # Inicialização do estado de arraste
     max_age = 0 # Idade máxima inicial.
+    click_buffer = np.zeros((width, height), dtype=bool)
 
     # Loop Principal do jogo.
     while running:
@@ -271,6 +291,21 @@ def run_GameOfLifeModel(
 
         if not paused:
             model.step()
+        model.cell_layer.data = np.logical_or(model.cell_layer.data, click_buffer)
+        click_buffer.fill(False)
+
+        new_cell_size = int(slider_values["slider4"] * 45 + 5)
+
+        # Se o tamanho das células mudou, recalcular a grade
+        if new_cell_size != cell_size:
+            cell_size = new_cell_size
+            width = screen.get_width() // cell_size
+            height = (screen.get_height() - 100) // cell_size
+            model = GameOfLifeModel(
+                width, height, revive_probabilities, survival_probabilities, alive_fraction, lamb, age_death
+            )
+            # Reinicialize o click_buffer para o novo tamanho
+            click_buffer = np.zeros((width, height), dtype=bool)
 
         # Renderização
         screen.fill((0, 0, 0))
