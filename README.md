@@ -10,7 +10,8 @@ O Jogo da Vida de [Conway](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 #### Running the Model
 Para observar as visualizações, basta ecessar os arquivos que possuem 'visualizacao' no começo do nome, cada pasta possui sua própria visualização e modelo. 
 
-###Comentários do repositório original:
+### Comentários do repositório original
+
 #### Key features:
 - **No grid or agents:** This implementation uses the `PropertyLayer` to manage the state of cells, eliminating the need for traditional grids or agents.
 - **Fast:** By using 2D convolution to count neighbors, the model efficiently applies the rules of the Game of Life across the entire grid.
