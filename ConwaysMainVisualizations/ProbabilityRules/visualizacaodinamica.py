@@ -404,10 +404,10 @@ def run_GameOfLifeModel(
         value = int(slider1["pos"] / 200 * 50)  # Escala o valor de 0 a 50
         value_text = font.render(f"{value:.1f}", True, (255, 255, 255))
         screen.blit(value_text, (slider1["rect"].x + slider1["rect"].width + 10, slider1["rect"].y))
-        # Valor do slider (de 0% a 0.02%) para o respawn
+        # Valor do slider (de 0% a 2%) para o respawn
         slider2 = sliders['slider2']
         value = slider2["pos"] / 10000  # Escala o valor de 0 a 0.02
-        value_text = font.render(f"{value:.3f}", True, (255, 255, 255))
+        value_text = font.render(f"{100*value:.2f}", True, (255, 255, 255))
         screen.blit(value_text, (slider2["rect"].x + slider2["rect"].width + 10, slider2["rect"].y))
         revive_probabilities[0] = value
         # Ajustar a densidade
